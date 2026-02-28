@@ -1,7 +1,6 @@
-import { auth, signIn, signOut } from "@/auth";
+import { auth, signIn, signOut, prisma } from "@/auth";
 import { revalidatePath } from "next/cache";
 import Link from "next/link"; // Required for Day 3 navigation
-import { prisma } from "@/auth"; 
 
 export default async function Home() {
   const session = await auth();
