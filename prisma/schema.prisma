@@ -1,0 +1,108 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider        = "prisma-client-js"
+  previewFeatures = ["driverAdapters"]
+}
+
+datasource db {
+  provider = "postgresql"
+  // Note: url and directUrl are handled in prisma.config.ts for version 7.4.2
+}
+
+model User {
+  id            String    @id @default(cuid())
+  name          String?
+  email         String?   @unique
+  emailVerified DateTime?
+  image         String?
+  accounts      Account[]
+  sessions      Session[]
+  
+  // Relationship: One user can have many trips
+  trips         Trip[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Trip {
+  id           String   @id @default(cuid())
+  destination  String
+  
+  // Day 3 & 4 Combined Fields
+  startDate    DateTime? 
+  endDate      DateTime? 
+  budget       Float?    @default(0) 
+  travelMode   String?   @default("Flight") 
+  notes        String?   
+  isPublic     Boolean   @default(false) // Day 4: For sharing trips
+  
+  // Relationship: Each trip belongs to one user
+  userId       String
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  // One trip has many sub-items (Day 4 Blitz)
+  todos        Todo[]
+  expenses     Expense[]
+
+  createdAt    DateTime @default(now())
+}
+
+// Day 4: Track trip costs
+model Expense {
+  id        String   @id @default(cuid())
+  item      String
+  amount    Float
+  tripId    String
+  trip      Trip     @relation(fields: [tripId], references: [id], onDelete: Cascade)
+}
+
+// Day 4: Packing list items
+model Todo {
+  id        String   @id @default(cuid())
+  task      String
+  completed Boolean  @default(false)
+  tripId    String
+  trip      Trip     @relation(fields: [tripId], references: [id], onDelete: Cascade)
+}
+
+model Account {
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String?
+  access_token      String?
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String?
+  session_state     String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@id([provider, providerAccountId])
+}
+
+model Session {
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model VerificationToken {
+  identifier String
+  token      String
+  expires    DateTime
+
+  @@id([identifier, token])
+}
